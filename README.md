@@ -72,7 +72,7 @@ task
 Interval tasks such as `every` and `everyNow` return `async iterators` when their `.promise()` function is called. This allows us to utilize the handy `for await... of` feature of JS.
 
 ```js
-async function every() {
+async function intervalForAwait() {
   for await (const ref of task.every("everyID", 1000).promise()) {
     console.log("Next Tick");
     // based on some logic...
@@ -82,7 +82,7 @@ async function every() {
 }
 
 // Or using standard async function...
-async function intervalYielded() {
+async function intervalAwait() {
   const iter = task.every("everyID", 1000).promise();
   let done = false;
   let ref;
