@@ -4,3 +4,6 @@ scripts
 private
 .DS_Store
 registry/
+.nyc_output
+coverage
+.coveralls.yml
