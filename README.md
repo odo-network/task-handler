@@ -20,9 +20,9 @@ yarn add task-handler
 npm install --save task-handler
 ```
 
-## Flow Coverage
+## Coverage
 
-This project provides `.flow.js` files for `Flow` to utilize.
+This project provides `.flow.js` files for `Flow` to utilize. It also attempts to provide 100% test coverage.
 
 ## Example
 
