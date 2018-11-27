@@ -41,7 +41,7 @@ task.defer("task:three", () => log("task:three execute"));
 // every interval and immediately (defer), execute
 task.everyNow("task:four", 3000, () => log("task:four execute"));
 
-// schedule a job with cancellation
+// schedule an advanced async job with cancellation
 task.job(
   "task:five",
   function TaskFiveHandler(...args) {
@@ -55,6 +55,9 @@ task.job(
         // ref is also the first argument given, it is the same as the
         // top level `this` but can be used when using arrow function
         // at the top level.
+        // ref.resolve('value');
+        // ref.reject('error');
+        // ref.cancel();
       },
       async cancelled() {
         // called if the job is cancelled
