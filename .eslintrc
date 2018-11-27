@@ -1,8 +1,14 @@
 {
   "parser": "babel-eslint",
   "parserOptions": {
+    "ecmaVersion": 9,
     "sourceType": "module",
     "allowImportExportEverywhere": true
+  },
+  "env": {
+    "mocha": true,
+    "browser": true,
+    "node": true
   },
   "extends": ["airbnb-base", "plugin:flowtype/recommended"],
   "rules": {

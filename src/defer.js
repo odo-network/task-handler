@@ -29,7 +29,6 @@ export default function createDeferQueue(refs) {
   const queue = new Map();
   let i = 0;
   let timerID;
-  let cancelDefer;
 
   const timeout = {
     create: undefined,
@@ -50,14 +49,16 @@ export default function createDeferQueue(refs) {
 
   const handler = Object.freeze({
     clear() {
-      if (typeof cancelDefer === 'function') {
-        cancelDefer(timerID);
+      if (timeout.cancel) {
+        timeout.cancel(timerID);
       }
       queue.clear();
-      cancelDefer = undefined;
     },
     cancel(deferID: any) {
       queue.delete(deferID);
+      if (queue.size === 0) {
+        handler.clear();
+      }
     },
     add(ref, cb) {
       i += 1;

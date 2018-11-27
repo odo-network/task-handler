@@ -46,10 +46,12 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
               }
               getNextPromise();
               // eslint-disable-next-line no-await-in-loop
-              yield await promise;
+              await promise;
+              yield ref;
               promiseActions = undefined;
               promise = undefined;
             }
+            return ref;
           } finally {
             promiseActions = undefined;
             promise = undefined;
@@ -60,11 +62,11 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
         || async function promisedResult() {
           try {
             if (ref.status.complete) {
-              return;
+              return ref;
             }
             getNextPromise();
-            const result = await promise;
-            return result;
+            await promise;
+            return ref;
           } finally {
             promiseActions = undefined;
             promise = undefined;
@@ -77,7 +79,6 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
       cancelled: false,
     },
     [TASK_CANCELLED](promises) {
-      console.log('Handle Cancel of ', id);
       if (ref.status.complete) {
         return;
       }
