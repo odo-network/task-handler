@@ -1,3 +1,4 @@
 private
-dist
 .DS_Store
+dev
+tests
