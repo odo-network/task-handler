@@ -97,6 +97,7 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
         promiseActions[0](ref);
       }
       if (job) {
+        /* istanbul ignore else */
         if (typeof job.cancelled === 'function') {
           promises.push(job.cancelled());
         } else if (process.env.NODE_ENV !== 'production') {
@@ -160,7 +161,7 @@ export default function createTaskHandler() {
 
   function cancelID(id: any, promises: Array<any>): void {
     if (!refs.has(id)) return;
-    const [ref, canceller] = refs.get(id) || [];
+    const [ref, canceller] = refs.get(id);
     canceller();
     refs.delete(id);
     ref[TASK_CANCELLED](promises);

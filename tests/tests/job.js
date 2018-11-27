@@ -13,6 +13,7 @@ describe('[job] | task.job works as expected', () => {
         executed = true;
       },
     }));
+
     expect(executed).to.be.equal(true);
     task.clear();
   });
