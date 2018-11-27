@@ -12,7 +12,6 @@ describe('[job] | task.job works as expected', () => {
       start() {
         executed = true;
       },
-      cancelled() {},
     }));
     expect(executed).to.be.equal(true);
     task.clear();
@@ -74,6 +73,8 @@ describe('[job] | task.job works as expected', () => {
     } catch (e) {
       msg = e.message;
     }
+
+    task.clear();
 
     expect(msg).to.be.equal('error');
   });

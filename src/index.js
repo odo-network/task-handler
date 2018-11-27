@@ -228,6 +228,7 @@ export default function createTaskHandler() {
           cancelDefer();
         },
       ]);
+      return ref;
     },
     job<+ID: any, +A: Array<*>>(
       id: ID,

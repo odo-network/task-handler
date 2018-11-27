@@ -29,6 +29,21 @@ describe('[every] | task.every works as expected', () => {
     await ms(100);
     expect(i).to.be.equal(0);
   });
+
+  it('allows using async iteration resolution', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+    const start = Date.now();
+    for await (const ref of task.every('every', 10).promise()) {
+      if (Date.now() - start > 50) {
+        ref.cancel();
+      } else {
+        i += 1;
+      }
+    }
+    expect(i).to.be.equal(4);
+    task.clear();
+  });
 });
 
 describe('[everyNow] | task.everyNow works as expected', () => {
@@ -53,5 +68,20 @@ describe('[everyNow] | task.everyNow works as expected', () => {
     task.cancel('every');
     await ms(100);
     expect(i).to.be.equal(0);
+  });
+
+  it('allows using async iteration resolution', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+    const start = Date.now();
+    for await (const ref of task.everyNow('every', 10).promise()) {
+      if (Date.now() - start > 50) {
+        ref.cancel();
+      } else {
+        i += 1;
+      }
+    }
+    expect(i).to.be.equal(5);
+    task.clear();
   });
 });
