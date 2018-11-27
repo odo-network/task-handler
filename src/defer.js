@@ -1,6 +1,8 @@
 /* @flow */
 
 function buildDeferTimeoutHandler(timeout) {
+  /* TODO : Setup Tests of the setImmediate and setTimeout fallbacks */
+  /* istanbul ignore else */
   if (typeof process === 'object' && typeof process.nextTick === 'function') {
     let tickCancelID = 0;
     timeout.create = function cancellableNextTick(cb) {
@@ -49,6 +51,7 @@ export default function createDeferQueue(refs) {
 
   const handler = Object.freeze({
     clear() {
+      /* istanbul ignore else */
       if (timeout.cancel) {
         timeout.cancel(timerID);
       }
