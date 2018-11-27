@@ -1,10 +1,9 @@
 node_modules
-lib
 scripts
 private
 .DS_Store
 registry/
 .nyc_output
-\./coverage/
-.coveralls.yml
+/coverage/
+/.coveralls.yml
 dist
