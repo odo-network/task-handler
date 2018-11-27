@@ -2,14 +2,6 @@
 
 A simple, dependency-free task scheduling manager that makes it easy to handle tasks like a boss.
 
-Combined with [pubchan](https://www.github.com/Dash-OS/pubchan), provides a
-lightweight and powerful toolkit for managing asynchronous coordination of your
-application's events.
-
-> **Note:** Documentation is currently a work in progress. However, the code
-> itself is at a stable level and used in production. This module has been
-> lifted from our private repositories and released to the public.
-
 ## Install
 
 ```
@@ -48,6 +40,9 @@ task.defer("task:four", () => log("task:four execute"));
 
 // every interval and immediately (defer), execute
 task.everyNow("task:three", 3000, () => log("task:three execute"));
+
+// cancels each of the given ID's, if they exist
+task.cancel("task:one", "task:two");
 
 // clear all tasks, killing the event queue and completing execution
 task.after("complete", 10000, () => {
