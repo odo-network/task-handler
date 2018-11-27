@@ -107,20 +107,19 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
       }
     },
     [EXECUTE_RESULT](err, result) {
-      if (ref.status.complete) {
-        return;
-      }
-      lastResult = result;
-      if (!isAsyncIterator) {
-        ref.status.complete = true;
-      }
-      if (promise) {
-        if (err) {
-          const error = typeof err === 'object' ? err : new Error(err);
-          error.taskRef = ref;
-          return promiseActions[1](error);
+      if (!ref.status.complete) {
+        lastResult = result;
+        if (!isAsyncIterator) {
+          ref.status.complete = true;
         }
-        return promiseActions[0](ref);
+        if (promise) {
+          if (err) {
+            const error = typeof err === 'object' ? err : new Error(err);
+            error.taskRef = ref;
+            return promiseActions[1](error);
+          }
+          return promiseActions[0](ref);
+        }
       }
     },
     id,
