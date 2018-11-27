@@ -58,6 +58,9 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
           }
         };
       }
+      if (promise) {
+        return () => promise;
+      }
       promiseFn = promiseFn
         || async function promisedResult() {
           try {
@@ -67,6 +70,10 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
             getNextPromise();
             await promise;
             return ref;
+          } catch (e) {
+            ref.status.error = true;
+            lastResult = e;
+            throw e;
           } finally {
             promiseActions = undefined;
             promise = undefined;
@@ -76,6 +83,7 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
     },
     status: {
       complete: false,
+      error: false,
       cancelled: false,
     },
     [TASK_CANCELLED](promises) {
@@ -108,8 +116,9 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
       }
       if (promise) {
         if (err) {
-          err.taskRef = ref;
-          return promiseActions[1](err);
+          const error = typeof err === 'object' ? err : new Error(err);
+          error.taskRef = ref;
+          return promiseActions[1](error);
         }
         return promiseActions[0](ref);
       }
@@ -131,7 +140,7 @@ function createTaskRef<+ID: any, +H: Task$Instance>(
 
   if (jobDescriptor) {
     job = jobDescriptor[0].apply(ref, jobDescriptor[1]);
-    ref.promise();
+    ref.promise().catch(NOOP);
     job.start.call(ref, ref);
   }
 

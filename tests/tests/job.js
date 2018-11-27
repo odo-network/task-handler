@@ -30,4 +30,51 @@ describe('[job] | task.job works as expected', () => {
     task.clear();
     expect(executed).to.be.equal(true);
   });
+
+  it('allows awaiting cancellation promises for jobs', async () => {
+    const task = createTaskHandler();
+    let executed = false;
+    task.job('job', () => ({
+      start() {},
+      async cancelled() {
+        await ms(10);
+        executed = true;
+      },
+    }));
+    await task.clear().promise();
+    expect(executed).to.be.equal(true);
+  });
+
+  it('properly handles ref.resolve(result)', async () => {
+    const task = createTaskHandler();
+    const ref = await task
+      .job('job', () => ({
+        start(ref) {
+          ref.resolve('success');
+        },
+        cancelled() {},
+      }))
+      .promise();
+
+    expect(ref.result).to.be.equal('success');
+  });
+
+  it('properly handles ref.reject(err)', async () => {
+    const task = createTaskHandler();
+    let msg;
+    try {
+      await task
+        .job('job', () => ({
+          start(ref) {
+            ref.reject('error');
+          },
+          cancelled() {},
+        }))
+        .promise();
+    } catch (e) {
+      msg = e.message;
+    }
+
+    expect(msg).to.be.equal('error');
+  });
 });
