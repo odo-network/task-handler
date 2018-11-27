@@ -75,13 +75,13 @@ describe('[everyNow] | task.everyNow works as expected', () => {
     let i = 0;
     const start = Date.now();
     for await (const ref of task.everyNow('every', 10).promise()) {
-      if (Date.now() - start > 50) {
+      if (Date.now() - start >= 50) {
         ref.cancel();
       } else {
         i += 1;
       }
     }
-    expect(i).to.be.equal(5);
+    expect(i).to.be.closeTo(5, 1);
     task.clear();
   });
 });
