@@ -34,7 +34,7 @@ describe('[every] | task.every works as expected', () => {
     const task = createTaskHandler();
     let i = 0;
     const start = Date.now();
-    for await (const ref of task.every('every', 10).promise()) {
+    for await (const ref of task.every('every', 10).promises()) {
       if (Date.now() - start > 50) {
         ref.cancel();
       } else {
@@ -74,7 +74,7 @@ describe('[everyNow] | task.everyNow works as expected', () => {
     const task = createTaskHandler();
     let i = 0;
     const start = Date.now();
-    for await (const ref of task.everyNow('every', 10).promise()) {
+    for await (const ref of task.everyNow('every', 10).promises()) {
       if (Date.now() - start >= 50) {
         ref.cancel();
       } else {

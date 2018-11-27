@@ -4,6 +4,7 @@
 [![Build Status](https://travis-ci.com/odo-network/task-handler.svg?branch=master)](https://travis-ci.com/odo-network/task-handler)
 [![Known Vulnerabilities](https://snyk.io/test/github/odo-network/task-handler/badge.svg?targetFile=package.json)](https://snyk.io/test/github/odo-network/task-handler?targetFile=package.json)
 [![Coverage Status](https://coveralls.io/repos/github/odo-network/task-handler/badge.svg?branch=master&service=github)](https://coveralls.io/github/odo-network/task-handler?branch=master)
+[![Flow Coverage](./.flow/flow-coverage-badge.svg)](./.flow/index.html)
 [![license](https://img.shields.io/github/license/odo-network/task-handler.svg)](https://github.com/odo-network/task-handler)
 [![npm bundle size (minified + gzip)](https://img.shields.io/bundlephobia/minzip/react.svg)](https://github.com/odo-network/task-handler)
 
@@ -74,9 +75,7 @@ task.job(
       }
     };
   },
-  1,
-  2,
-  3
+  [1, 2, 3]
 );
 
 // get the total # of tasks scheduled

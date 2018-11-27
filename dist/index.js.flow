@@ -1,8 +1,4 @@
 /* @flow */
-import type {
-  Task$Types, Task$Handler, Task$Ref, Task$RefMap,
-} from './types';
-
 import {
   NOOP,
   EXECUTE_RESULT,
@@ -12,25 +8,25 @@ import {
 
 import createDeferQueue from './defer';
 
-function createTaskRef<+ID: any>(
-  type: Task$Types,
+function createTaskRef<+ID: any, +H: *>(
   id: ID,
-  handler: Task$Handler,
-  jobDescriptor?: [Function, Array<any>],
+  handler: H,
+  isAsyncIterator?: boolean,
+  jobDescriptor?: [Function, Array<*>],
 ): Task$Ref {
   handler.cancel(id);
-  let promise: void | Promise<Task$Ref>;
+  let promiseFn;
+  let promise;
   let promiseActions;
   let lastResult;
   let job;
 
-  const getNextPromise = () => {
-    if (promise) return promise;
-    promise = new Promise((resolve, reject) => {
-      promiseActions = [resolve, reject];
-    });
-    return promise;
-  };
+  const getNextPromise = () => promise
+    || do {
+      promise = new Promise((resolve, reject) => {
+        promiseActions = [resolve, reject];
+      });
+    };
 
   const ref: Task$Ref = {
     get result() {
@@ -40,70 +36,55 @@ function createTaskRef<+ID: any>(
       return undefined;
     },
     get promise() {
-      if (type === 'every') {
-        throw new Error(
-          `[ERROR] | task-handler | "ref.promise()" may only be used with non-iterative tasks such as after, defer, and job, but tried with "${type}" task with ID: "${id}"`,
-        );
-      }
-      return async function promisedResult(): Promise<Task$Ref> {
-        if (promise) {
-          return promise;
-        }
-        try {
-          if (ref.status.complete) {
-            return ref;
-          }
-          getNextPromise();
-          await promise;
-          return ref;
-        } catch (e) {
-          ref.status.error = true;
-          lastResult = e;
-          throw e;
-        } finally {
-          promiseActions = undefined;
-          promise = undefined;
-        }
-      };
-    },
-    get promises() {
-      if (type !== 'every') {
-        throw new Error(
-          `[ERROR] | task-handler | "ref.promises()" may only be used with iterative tasks such as every and everyNow, but tried with "${type}" task with ID: "${id}"`,
-        );
-      }
-      return async function* promiseIterator(): AsyncGenerator<
-        Task$Ref,
-        Task$Ref,
-        *,
-        > {
-        try {
-          while (true) {
-            if (ref.status.complete) {
-              break;
-            }
-            if (!promise) {
+      if (isAsyncIterator) {
+        return async function* promiseIterator() {
+          try {
+            while (true) {
+              if (ref.status.complete) {
+                break;
+              }
               getNextPromise();
+              // eslint-disable-next-line no-await-in-loop
+              await promise;
+              yield ref;
+              promiseActions = undefined;
+              promise = undefined;
             }
-            // eslint-disable-next-line no-await-in-loop
-            await promise;
-            yield ref;
+            return ref;
+          } finally {
             promiseActions = undefined;
             promise = undefined;
           }
-          return ref;
-        } finally {
-          promiseActions = undefined;
-          promise = undefined;
-        }
-      };
+        };
+      }
+      if (promise) {
+        return () => promise;
+      }
+      promiseFn = promiseFn
+        || async function promisedResult() {
+          try {
+            if (ref.status.complete) {
+              return ref;
+            }
+            getNextPromise();
+            await promise;
+            return ref;
+          } catch (e) {
+            ref.status.error = true;
+            lastResult = e;
+            throw e;
+          } finally {
+            promiseActions = undefined;
+            promise = undefined;
+          }
+        };
+      return promiseFn;
     },
     status: {
       complete: false,
       error: false,
       cancelled: false,
     },
-    // $FlowIgnore
     [TASK_CANCELLED](promises) {
       if (ref.status.complete) {
         return;
@@ -111,7 +92,7 @@ function createTaskRef<+ID: any>(
       lastResult = TASK_CANCELLED;
       ref.status.cancelled = true;
       ref.status.complete = true;
-      if (promiseActions) {
+      if (promise) {
         promiseActions[0](ref);
       }
       if (job) {
@@ -125,16 +106,15 @@ function createTaskRef<+ID: any>(
         }
       }
     },
-    // $FlowIgnore
     [EXECUTE_RESULT](err, result) {
       if (!ref.status.complete) {
         lastResult = result;
-        if (ref.type !== 'every') {
+        if (!isAsyncIterator) {
           ref.status.complete = true;
         }
-        if (promiseActions) {
+        if (promise) {
           if (err) {
-            const error: { taskRef?: Task$Ref } & Error = typeof err === 'object' ? err : new Error(err);
+            const error = typeof err === 'object' ? err : new Error(err);
             error.taskRef = ref;
             return promiseActions[1](error);
           }
@@ -143,14 +123,11 @@ function createTaskRef<+ID: any>(
       }
     },
     id,
-    type,
     task: handler,
     resolve(result) {
-      // $FlowIgnore
       return ref[EXECUTE_RESULT](undefined, result);
     },
     reject(err) {
-      // $FlowIgnore
       return ref[EXECUTE_RESULT](err);
     },
     cancel() {
@@ -169,8 +146,8 @@ function createTaskRef<+ID: any>(
   return Object.freeze(ref);
 }
 
-export default function createTaskHandler(): Task$Handler {
-  const refs: Task$RefMap = new Map();
+export default function createTaskHandler() {
+  const refs: Map<any, [Task$Ref, () => void]> = new Map();
   let queue;
 
   function getQueue() {
@@ -182,26 +159,18 @@ export default function createTaskHandler(): Task$Handler {
   }
 
   function cancelID(id: any, promises: Array<any>): void {
-    // Required for Flow to resolve
-    const descriptor = refs.get(id);
-    if (!descriptor) return;
-    const [ref, canceller] = descriptor;
+    if (!refs.has(id)) return;
+    const [ref, canceller] = refs.get(id);
     canceller();
     refs.delete(id);
-    // $FlowIgnore
     ref[TASK_CANCELLED](promises);
   }
 
-  function execute<R: Task$Ref, +A: Array<any>, +F:(...args: A) => any>(
-    ref: R,
-    fn: void | F,
-    args: A) {
+  function execute(ref, fn, args = STATIC_EMPTY_ARRAY) {
     try {
-      const result = typeof fn === 'function' ? fn(...args) : undefined;
-      // $FlowIgnore
+      const result = typeof fn === 'function' ? fn(ref, ...args) : undefined;
       ref[EXECUTE_RESULT](undefined, result);
     } catch (e) {
-      // $FlowIgnore
       ref[EXECUTE_RESULT](e);
     }
   }
@@ -210,34 +179,34 @@ export default function createTaskHandler(): Task$Handler {
     get size(): number {
       return refs.size;
     },
-    after<+ID: any, +A: Array<any>, +F: (...args: A) => any>(
+    after<+ID: any, +A: Array<*>>(
       id: ID,
       delay: number,
-      fn?: F,
-      ...args: A
+      fn?: ((...A) => any) | A,
+      args?: A,
     ): Task$Ref {
-      const ref = createTaskRef('after', id, handler);
+      const ref = createTaskRef(id, handler);
       const timeoutID = setTimeout(execute, delay, ref, fn, args);
       refs.set(id, [ref, () => clearTimeout(timeoutID)]);
       return ref;
     },
-    defer<+ID: any, +A: Array<any>, +F: (...args: A) => any>(
+    defer<+ID: any, +A: Array<*>>(
       id: ID,
-      fn?: F,
-      ...args: A
+      fn?: (...A) => any,
+      args?: A,
     ): Task$Ref {
-      const ref = createTaskRef('defer', id, handler);
+      const ref = createTaskRef(id, handler);
       const cancelDefer = getQueue().add(ref, () => execute(ref, fn, args));
       refs.set(id, [ref, () => cancelDefer()]);
       return ref;
     },
-    every<+ID: any, +A: Array<any>, +F: (...args: A) => any>(
+    every<+ID: any, +A: Array<*>>(
       id: ID,
       interval: number,
-      fn?: F,
-      ...args: A
+      fn?: (...A) => any,
+      args?: A,
     ): Task$Ref {
-      const ref = createTaskRef('every', id, handler);
+      const ref = createTaskRef(id, handler, true);
       const timerID = setInterval(execute, interval, ref, fn, args);
       refs.set(id, [ref, () => clearInterval(timerID)]);
       return ref;
@@ -245,10 +214,10 @@ export default function createTaskHandler(): Task$Handler {
     everyNow<+ID: any, +A: Array<any>>(
       id: ID,
       interval: number,
-      fn?: (...args: A) => any,
-      ...args: A
+      fn?: (...A) => any,
+      args?: A,
     ): Task$Ref {
-      const ref = createTaskRef('every', id, handler);
+      const ref = createTaskRef(id, handler, true);
       const timerID = setInterval(execute, interval, ref, fn, args);
       const cancelDefer = getQueue().add(id, () => execute(ref, fn, args));
       refs.set(id, [
@@ -260,15 +229,12 @@ export default function createTaskHandler(): Task$Handler {
       ]);
       return ref;
     },
-    job<+ID: any, +A: Array<any>>(
+    job<+ID: any, +A: Array<*>>(
       id: ID,
-      getJob: (...args: A) => any,
-      ...args: A
-    ): Task$Ref {
-      const ref = createTaskRef('job', id, handler, [
-        getJob,
-        args || STATIC_EMPTY_ARRAY,
-      ]);
+      getJob: (...A) => any,
+      args?: A = STATIC_EMPTY_ARRAY,
+    ) {
+      const ref = createTaskRef(id, handler, false, [getJob, args]);
       refs.set(id, [ref, NOOP]);
       return ref;
     },

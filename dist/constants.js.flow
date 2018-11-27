@@ -2,7 +2,7 @@
 
 export const NOOP = () => {};
 
-export const STATIC_EMPTY_ARRAY: Array<any> = Object.freeze([]);
+export const STATIC_EMPTY_ARRAY = Object.freeze([]);
 
 export const EXECUTE_RESULT = Symbol.for('@task-handler/result');
 

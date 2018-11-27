@@ -1,5 +1,4 @@
 /* @flow */
-import type { Task$Ref, Task$RefMap } from './types';
 
 function buildDeferTimeoutHandler(timeout) {
   /* TODO : Setup Tests of the setImmediate and setTimeout fallbacks */
@@ -26,10 +25,9 @@ function buildDeferTimeoutHandler(timeout) {
     timeout.create = setTimeout;
     timeout.cancel = clearTimeout;
   }
-  Object.freeze(timeout);
 }
 
-export default function createDeferQueue(refs: Task$RefMap) {
+export default function createDeferQueue(refs) {
   const queue = new Map();
   let i = 0;
   let timerID;
@@ -55,7 +53,6 @@ export default function createDeferQueue(refs: Task$RefMap) {
     clear() {
       /* istanbul ignore else */
       if (timeout.cancel) {
-        // $FlowIgnore
         timeout.cancel(timerID);
       }
       queue.clear();
@@ -66,20 +63,14 @@ export default function createDeferQueue(refs: Task$RefMap) {
         handler.clear();
       }
     },
-    add(ref: Task$Ref, cb: Function) {
+    add(ref, cb) {
       i += 1;
       const deferID = i;
       if (queue.size === 0) {
         if (!timeout.create) {
           buildDeferTimeoutHandler(timeout);
         }
-        if (timeout.create) {
-          timerID = timeout.create(flush);
-        } else {
-          throw new Error(
-            '[ERROR] | task-handler | defer failed to create a defer handler.  Internal Error.',
-          );
-        }
+        timerID = timeout.create(flush);
       }
       queue.set(deferID, [ref, cb]);
       return () => handler.cancel(deferID);

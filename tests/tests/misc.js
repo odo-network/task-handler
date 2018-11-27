@@ -25,7 +25,6 @@ describe('[misc] | various functions & utilities work', () => {
     const ref = task.after('after', 100, () => 1);
     await ref.promise();
     ref[EXECUTE_RESULT](undefined, 2);
-
     expect(ref.result).to.be.equal(1);
   });
 });
