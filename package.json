@@ -65,6 +65,7 @@
     "outputDir": "dev/coverage/flow",
     "flowCommandPath": "node_modules/.bin/flow"
   },
+  "dependencies": {},
   "devDependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.1.6",

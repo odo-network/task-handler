@@ -6,7 +6,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/odo-network/task-handler/badge.svg?branch=master&service=github)](https://coveralls.io/github/odo-network/task-handler?branch=master)
 [![Flow Coverage](./dev/coverage/flow/flow-coverage-badge.svg)](https://odo-network.github.io/task-handler/dev/coverage/flow/index.html)
 [![license](https://img.shields.io/github/license/odo-network/task-handler.svg)](https://github.com/odo-network/task-handler)
-[![npm bundle size (minified + gzip)](https://img.shields.io/bundlephobia/minzip/react.svg)](https://github.com/odo-network/task-handler)
+[![npm bundle size (minified + gzip)](https://img.shields.io/bundlephobia/minzip/task-handler.svg)](https://github.com/odo-network/task-handler)
 
 A simple, dependency-free task scheduling manager that makes it easy to handle tasks like a boss.
 
