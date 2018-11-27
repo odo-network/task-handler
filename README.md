@@ -1,11 +1,10 @@
 # task-handler
 
-A simple, dependency-free Task Manager to make handling of your Javascript
-Timers easier to work with.
+A simple, dependency-free task scheduling manager that makes it easy to handle tasks like a boss.
 
 Combined with [pubchan](https://www.github.com/Dash-OS/pubchan), provides a
 lightweight and powerful toolkit for managing asynchronous coordination of your
-applications events.
+application's events.
 
 > **Note:** Documentation is currently a work in progress. However, the code
 > itself is at a stable level and used in production. This module has been
@@ -44,25 +43,25 @@ work.
 ```js
 /* @flow */
 
-import createTaskHandler from 'task-handler';
+import createTaskHandler from "task-handler";
 
-const task = createTaskHandler('simple');
+const task = createTaskHandler("simple");
 
 // after timeout
-task.after('task:one', 3000, () => log('task:one execute'));
+task.after("task:one", 3000, () => log("task:one execute"));
 
 // every interval, execute
-task.every('task:two', 3000, () => log('task:two execute'));
+task.every("task:two", 3000, () => log("task:two execute"));
 
 // immediately execute (nextTick, immediate, timeout priority - first found)
-task.defer('task:four', () => log('task:four execute'));
+task.defer("task:four", () => log("task:four execute"));
 
 // every interval and immediately (defer), execute
-task.everyNow('task:three', 3000, () => log('task:three execute'));
+task.everyNow("task:three", 3000, () => log("task:three execute"));
 
 // clear all tasks, killing the event queue and completing execution
-task.after('complete', 10000, () => {
-  log('complete - clearing tasks');
+task.after("complete", 10000, () => {
+  log("complete - clearing tasks");
   task.clear();
 });
 ```
@@ -88,15 +87,15 @@ easier to read.
 Consider the following:
 
 ```js
-import createTaskHandler from 'task-handler';
+import createTaskHandler from "task-handler";
 const task = createTaskHandler();
 
 const state = { handshaked: false };
 
 // check if our other code has set handshaked to true before the time is up
-task.after('handshake', HANDSHAKE_TIMEOUT_MS, () => {
+task.after("handshake", HANDSHAKE_TIMEOUT_MS, () => {
   if (!state.handshaked) {
-    disconnect(403, 'Failed to Authenticate: Handshake Failure');
+    disconnect(403, "Failed to Authenticate: Handshake Failure");
   }
 });
 ```
@@ -106,8 +105,8 @@ concise by separating the pieces with a `While Condition`.
 
 ```js
 task
-  .after('handshake', HANDSHAKE_TIMEOUT_MS, () =>
-    disconnect(403, 'Failed to Authenticate: Handshake Failure'),
+  .after("handshake", HANDSHAKE_TIMEOUT_MS, () =>
+    disconnect(403, "Failed to Authenticate: Handshake Failure")
   )
   .while(() => !state.handshaked);
 ```
@@ -132,12 +131,12 @@ type TaskID = string;
 type TaskCancelFunction = () => boolean;
 
 type TaskTypes =
-  | 'timeout'
-  | 'timeouts'
-  | 'intervals'
-  | 'interval'
-  | 'defer'
-  | 'defers';
+  | "timeout"
+  | "timeouts"
+  | "intervals"
+  | "interval"
+  | "defer"
+  | "defers";
 
 type TaskID = string;
 
@@ -150,7 +149,7 @@ type CallbackRef = {|
   +id: TaskID,
   +cancel: TaskCancelFunction,
   +while: (condition: WhileConditionFn) => void,
-  +promise: () => Promise<*>,
+  +promise: () => Promise<*>
 |};
 
 type CallbackFn = (ref: CallbackRef, ...args: Array<*>) => mixed;
@@ -170,7 +169,7 @@ given id. If that `TaskHandler` was previously created, it returns it, otherwise
 it creates a new instance and returns that.
 
 ```js
-import createTaskHandler from 'task-handler';
+import createTaskHandler from "task-handler";
 const task = createTaskHandler();
 ```
 
