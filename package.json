@@ -1,0 +1,77 @@
+{
+  "name": "task-handler",
+  "version": "1.0.13",
+  "description": "Handle Javascript Timers in a manageable way",
+  "main": "lib/index.js",
+  "author": "Braden R. Napier",
+  "license": "MIT",
+  "reveal": true,
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dash-OS/task-handler/"
+  },
+  "keywords": [
+    "tasks",
+    "setTimeout",
+    "setInterval",
+    "setImmediate",
+    "nextTick",
+    "timer",
+    "future",
+    "cron",
+    "schedule"
+  ],
+  "scripts": {
+    "flow": "flow",
+    "build": "cross-env NODE_ENV=production rimraf lib registry && npm-run-all -p build:**",
+    "build:pubchan:babel": "babel src --out-dir lib",
+    "build:pubchan:flow": "flow-copy-source src lib",
+    "prepublishOnly": "npm-run-all build",
+    "try": "babel-node ./try-test"
+  },
+  "nyc": {
+    "reporter": [
+      "html",
+      "lcov",
+      "text"
+    ],
+    "require": [
+      "@babel/register"
+    ],
+    "exclude": [
+      "test/",
+      "**/node_modules/**"
+    ],
+    "sourceMap": false,
+    "instrument": false
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/node": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-do-expressions": "^7.0.0",
+    "@babel/preset-env": "^7.1.6",
+    "@babel/preset-flow": "^7.0.0",
+    "babel-eslint": "^10.0.1",
+    "chai": "^4.2.0",
+    "coveralls": "^3.0.2",
+    "cross-env": "^5.2.0",
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-flowtype": "^3.2.0",
+    "eslint-plugin-import": "^2.14.0",
+    "flow-bin": "^0.86.0",
+    "flow-copy-source": "^2.0.2",
+    "mocha": "^5.2.0",
+    "npm-run-all": "^4.1.5",
+    "nyc": "^13.1.0",
+    "projectz": "^1.5.3",
+    "pubchan": "^1.11.0",
+    "pubsub-js": "^1.7.0",
+    "rimraf": "^2.6.2"
+  }
+}
