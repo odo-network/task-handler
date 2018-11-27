@@ -36,10 +36,41 @@ task.after("task:one", 3000, () => log("task:one execute"));
 task.every("task:two", 3000, () => log("task:two execute"));
 
 // immediately execute on next tick (nextTick, immediate, timeout priority - first found)
-task.defer("task:four", () => log("task:four execute"));
+task.defer("task:three", () => log("task:three execute"));
 
 // every interval and immediately (defer), execute
-task.everyNow("task:three", 3000, () => log("task:three execute"));
+task.everyNow("task:four", 3000, () => log("task:four execute"));
+
+// schedule a job with cancellation
+task.job(
+  "task:five",
+  function TaskFiveHandler(...args) {
+    // args resolves to [1, 2, 3]
+    // saved context - `this` resolves to the job `ref`
+    const ref = this;
+    return {
+      async start(ref2) {
+        // called when the job starts (synchronously)
+        //
+        // ref is also the first argument given, it is the same as the
+        // top level `this` but can be used when using arrow function
+        // at the top level.
+      },
+      async cancelled() {
+        // called if the job is cancelled
+      },
+      async complete() {
+        // called when the job is complete (resolved, cancelled, or errored).
+      }
+    };
+  },
+  1,
+  2,
+  3
+);
+
+// get the total # of tasks scheduled
+task.size; // 5
 
 // cancels each of the given ID's, if they exist
 task.cancel("task:one", "task:two");
