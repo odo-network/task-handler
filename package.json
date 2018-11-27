@@ -50,7 +50,8 @@
       "**/node_modules/**"
     ],
     "sourceMap": false,
-    "instrument": false
+    "instrument": false,
+    "report-dir": "dev/coverage/tests"
   },
   "flow-coverage-report": {
     "globIncludePatterns": [
@@ -61,7 +62,7 @@
       "text",
       "html"
     ],
-    "outputDir": "dev/flow/coverage",
+    "outputDir": "dev/coverage/flow",
     "flowCommandPath": "node_modules/.bin/flow"
   },
   "devDependencies": {

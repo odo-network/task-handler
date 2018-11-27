@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.com/odo-network/task-handler.svg?branch=master)](https://travis-ci.com/odo-network/task-handler)
 [![Known Vulnerabilities](https://snyk.io/test/github/odo-network/task-handler/badge.svg?targetFile=package.json)](https://snyk.io/test/github/odo-network/task-handler?targetFile=package.json)
 [![Coverage Status](https://coveralls.io/repos/github/odo-network/task-handler/badge.svg?branch=master&service=github)](https://coveralls.io/github/odo-network/task-handler?branch=master)
-[![Flow Coverage](./dev/flow/coverage/flow-coverage-badge.svg)](./.flow/index.html)
+[![Flow Coverage](./dev/coverage/flow/flow-coverage-badge.svg)](https://odo-network.github.io/task-handler/dev/coverage/flow/)
 [![license](https://img.shields.io/github/license/odo-network/task-handler.svg)](https://github.com/odo-network/task-handler)
 [![npm bundle size (minified + gzip)](https://img.shields.io/bundlephobia/minzip/react.svg)](https://github.com/odo-network/task-handler)
 
