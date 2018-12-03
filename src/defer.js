@@ -73,6 +73,7 @@ export default function createDeferQueue(refs: Task$RefMap) {
         if (!timeout.create) {
           buildDeferTimeoutHandler(timeout);
         }
+        /* istanbul ignore else */
         if (timeout.create) {
           timerID = timeout.create(flush);
         } else {

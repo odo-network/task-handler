@@ -18,6 +18,24 @@ describe('[job] | task.job works as expected', () => {
     task.clear();
   });
 
+  it('handles task.job().start errors properly', async () => {
+    const task = createTaskHandler();
+    let errored = false;
+    try {
+      task.job('job', () => ({
+        start() {
+          throw new Error('error');
+        },
+        cancelled() {},
+      }));
+    } catch (e) {
+      errored = true;
+    }
+
+    expect(errored).to.be.equal(true);
+    task.clear();
+  });
+
   it('executes task.job().cancelled synchronously', async () => {
     const task = createTaskHandler();
     let executed = false;
@@ -47,7 +65,7 @@ describe('[job] | task.job works as expected', () => {
 
   it('properly handles ref.resolve(result)', async () => {
     const task = createTaskHandler();
-    const ref = await task
+    const topref = await task
       .job('job', () => ({
         start(ref) {
           ref.resolve('success');
@@ -56,14 +74,16 @@ describe('[job] | task.job works as expected', () => {
       }))
       .promise();
 
-    expect(ref.result).to.be.equal('success');
+    expect(topref.result).to.be.equal('success');
+
+    task.clear();
   });
 
   it('properly handles ref.reject(err)', async () => {
     const task = createTaskHandler();
     let msg;
     try {
-      await task
+      const ref2 = await task
         .job('job', () => ({
           start(ref) {
             ref.reject('error');
@@ -75,8 +95,8 @@ describe('[job] | task.job works as expected', () => {
       msg = e.message;
     }
 
-    task.clear();
-
     expect(msg).to.be.equal('error');
+
+    task.clear();
   });
 });

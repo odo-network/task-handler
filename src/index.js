@@ -1,6 +1,10 @@
 /* @flow */
 import type {
-  Task$Types, Task$Handler, Task$Ref, Task$RefMap,
+  Task$Types,
+  Task$Handler,
+  Task$Ref,
+  Task$RefMap,
+  Task$Job,
 } from './types';
 
 import {
@@ -12,17 +16,17 @@ import {
 
 import createDeferQueue from './defer';
 
-function createTaskRef<+ID: any>(
+function createTaskRef<+ID: any, +A: Array<any>>(
   type: Task$Types,
   id: ID,
   handler: Task$Handler,
-  jobDescriptor?: [Function, Array<any>],
+  jobDescriptor?: [(...args: A) => Task$Job, A, Task$RefMap],
 ): Task$Ref {
   handler.cancel(id);
   let promise: void | Promise<Task$Ref>;
   let promiseActions;
   let lastResult;
-  let job;
+  let job: Task$Job;
 
   const getNextPromise = () => {
     if (promise) return promise;
@@ -40,29 +44,23 @@ function createTaskRef<+ID: any>(
       return undefined;
     },
     get promise() {
-      if (type === 'every') {
-        throw new Error(
-          `[ERROR] | task-handler | "ref.promise()" may only be used with non-iterative tasks such as after, defer, and job, but tried with "${type}" task with ID: "${id}"`,
-        );
-      }
       return async function promisedResult(): Promise<Task$Ref> {
-        if (promise) {
-          return promise;
-        }
+        let instancePromise;
         try {
           if (ref.status.complete) {
+            if (ref.status.error) {
+              throw lastResult;
+            }
             return ref;
           }
-          getNextPromise();
-          await promise;
+          instancePromise = getNextPromise();
+          await instancePromise;
           return ref;
-        } catch (e) {
-          ref.status.error = true;
-          lastResult = e;
-          throw e;
         } finally {
-          promiseActions = undefined;
-          promise = undefined;
+          if (instancePromise === promise) {
+            promiseActions = undefined;
+            promise = undefined;
+          }
         }
       };
     },
@@ -77,24 +75,24 @@ function createTaskRef<+ID: any>(
         Task$Ref,
         *,
         > {
+        let instancePromise;
         try {
-          while (true) {
-            if (ref.status.complete) {
-              break;
-            }
-            if (!promise) {
-              getNextPromise();
-            }
+          while (!ref.status.complete) {
+            instancePromise = getNextPromise();
             // eslint-disable-next-line no-await-in-loop
-            await promise;
+            await instancePromise;
             yield ref;
-            promiseActions = undefined;
-            promise = undefined;
+            if (instancePromise === promise) {
+              promiseActions = undefined;
+              promise = undefined;
+            }
           }
           return ref;
         } finally {
-          promiseActions = undefined;
-          promise = undefined;
+          if (instancePromise === promise) {
+            promiseActions = undefined;
+            promise = undefined;
+          }
         }
       };
     },
@@ -108,20 +106,22 @@ function createTaskRef<+ID: any>(
       if (ref.status.complete) {
         return;
       }
-      lastResult = TASK_CANCELLED;
-      ref.status.cancelled = true;
       ref.status.complete = true;
-      if (promiseActions) {
-        promiseActions[0](ref);
-      }
-      if (job) {
-        /* istanbul ignore else */
-        if (typeof job.cancelled === 'function') {
-          promises.push(job.cancelled());
-        } else if (process.env.NODE_ENV !== 'production') {
-          console.warn(
-            `[WARN] | task-handler | Async Job "${id}" was cancelled but provided no "cancelled" handler.`,
-          );
+      if (ref.status.error === false) {
+        lastResult = TASK_CANCELLED;
+        ref.status.cancelled = true;
+        if (promiseActions) {
+          promiseActions[0](ref);
+        }
+        if (job) {
+          /* istanbul ignore else */
+          if (typeof job.cancelled === 'function') {
+            promises.push(job.cancelled.call(ref, ref));
+          } else if (process.env.NODE_ENV !== 'production') {
+            console.warn(
+              `[WARN] | task-handler | Async Job "${id}" was cancelled but provided no "cancelled" handler.`,
+            );
+          }
         }
       }
     },
@@ -134,8 +134,11 @@ function createTaskRef<+ID: any>(
         }
         if (promiseActions) {
           if (err) {
+            ref.status.error = true;
             const error: { taskRef?: Task$Ref } & Error = typeof err === 'object' ? err : new Error(err);
             error.taskRef = ref;
+            lastResult = error;
+            ref.cancel();
             return promiseActions[1](error);
           }
           return promiseActions[0](ref);
@@ -154,15 +157,24 @@ function createTaskRef<+ID: any>(
       return ref[EXECUTE_RESULT](err);
     },
     cancel() {
-      lastResult = TASK_CANCELLED;
-      ref.status.cancelled = true;
-      handler.cancel(id);
+      if (!ref.status.complete) {
+        if (ref.status.error === false) {
+          lastResult = TASK_CANCELLED;
+          ref.status.cancelled = true;
+        }
+        handler.cancel(id);
+      }
     },
   };
 
   if (jobDescriptor) {
-    job = jobDescriptor[0].apply(ref, jobDescriptor[1]);
+    const [getJob, args, refs] = jobDescriptor;
+    job = getJob.apply(ref, args);
     ref.promise().catch(NOOP);
+    // in the case of async jobs we need to set the refs
+    // before we run the start call synchronously so that
+    // we can handle any actions called during execution.
+    refs.set(id, [ref, NOOP]);
     job.start.call(ref, ref);
   }
 
@@ -197,7 +209,7 @@ export default function createTaskHandler(): Task$Handler {
     fn: void | F,
     args: A) {
     try {
-      const result = typeof fn === 'function' ? fn(...args) : undefined;
+      const result = typeof fn === 'function' ? fn.apply(ref, args) : undefined;
       // $FlowIgnore
       ref[EXECUTE_RESULT](undefined, result);
     } catch (e) {
@@ -206,9 +218,12 @@ export default function createTaskHandler(): Task$Handler {
     }
   }
 
-  const handler = Object.freeze({
+  const handler: Task$Handler = Object.freeze({
     get size(): number {
       return refs.size;
+    },
+    has(...ids: Array<any>) {
+      return ids.every(id => refs.has(id));
     },
     after<+ID: any, +A: Array<any>, +F: (...args: A) => any>(
       id: ID,
@@ -242,10 +257,10 @@ export default function createTaskHandler(): Task$Handler {
       refs.set(id, [ref, () => clearInterval(timerID)]);
       return ref;
     },
-    everyNow<+ID: any, +A: Array<any>>(
+    everyNow<+ID: any, +A: Array<any>, F: (...args: A) => any>(
       id: ID,
       interval: number,
-      fn?: (...args: A) => any,
+      fn?: F,
       ...args: A
     ): Task$Ref {
       const ref = createTaskRef('every', id, handler);
@@ -260,16 +275,16 @@ export default function createTaskHandler(): Task$Handler {
       ]);
       return ref;
     },
-    job<+ID: any, +A: Array<any>>(
+    job<+ID: any, +A: Array<any>, F: (...args: A) => Task$Job>(
       id: ID,
-      getJob: (...args: A) => any,
+      getJob: F,
       ...args: A
     ): Task$Ref {
       const ref = createTaskRef('job', id, handler, [
         getJob,
         args || STATIC_EMPTY_ARRAY,
+        refs,
       ]);
-      refs.set(id, [ref, NOOP]);
       return ref;
     },
     cancel(...ids: Array<any>) {

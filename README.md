@@ -6,7 +6,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/odo-network/task-handler/badge.svg?branch=master&service=github)](https://coveralls.io/github/odo-network/task-handler?branch=master)
 [![Flow Coverage](./dev/coverage/flow/flow-coverage-badge.svg)](https://odo-network.github.io/task-handler/dev/coverage/flow/index.html)
 [![license](https://img.shields.io/github/license/odo-network/task-handler.svg)](https://github.com/odo-network/task-handler)
-[![npm bundle size (minified + gzip)](https://img.shields.io/bundlephobia/minzip/task-handler.svg)](https://github.com/odo-network/task-handler)
 
 A simple, dependency-free task scheduling manager that makes it easy to handle tasks like a boss.
 
@@ -104,11 +103,13 @@ task
   });
 ```
 
-Interval tasks such as `every` and `everyNow` return `async iterators` when their `.promise()` function is called. This allows us to utilize the handy `for await... of` feature of JS.
+Interval tasks such as `every` and `everyNow` return `async iterators` when their `.promises()` function is called. This allows us to utilize the handy `for await... of` feature of JS.
+
+> **IMPORTANT:** Notice that `every` and `everyNow` use `.promises()` and now `.promise()`. This is to allow for type safety. These tasks will error if `.promise()` is called on them.
 
 ```js
 async function intervalForAwait() {
-  for await (const ref of task.every("everyID", 1000).promise()) {
+  for await (const ref of task.every("everyID", 1000).promises()) {
     console.log("Next Tick");
     // based on some logic...
     ref.cancel();
@@ -118,7 +119,7 @@ async function intervalForAwait() {
 
 // Or using standard async function...
 async function intervalAwait() {
-  const iter = task.every("everyID", 1000).promise();
+  const iter = task.every("everyID", 1000).promises();
   let done = false;
   let ref;
   while (!done) {

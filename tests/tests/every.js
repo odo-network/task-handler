@@ -84,4 +84,69 @@ describe('[everyNow] | task.everyNow works as expected', () => {
     expect(i).to.be.closeTo(5, 1);
     task.clear();
   });
+
+  it('handles errors in async iteration properly', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+    const start = Date.now();
+    const ref = task.everyNow('every', 10, () => {
+      if (Date.now() - start >= 50) {
+        throw new Error('error');
+      } else {
+        i += 1;
+      }
+    });
+    try {
+      // eslint-disable-next-line no-unused-vars
+      for await (const ref2 of ref.promises()) {
+        // tick!
+      }
+    } catch (e) {
+      // do nothing!
+    }
+
+    expect(ref.status.error).to.be.equal(true);
+    expect(ref.result.message).to.be.equal('error');
+    expect(i).to.be.closeTo(5, 1);
+    task.clear();
+  });
+
+  it('allows calling ref.promise() to capture the next invocation result', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+
+    const ref = task.everyNow('every', 10, () => {
+      i += 1;
+      return i;
+    });
+
+    await ms(100);
+
+    await ref.promise().then(() => {
+      ref.cancel();
+      expect(i).to.be.closeTo(11, 1);
+    });
+
+    task.clear();
+  });
+
+  it('allows for multiple async iterators', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+    const start = Date.now();
+
+    async function instance() {
+      for await (const ref of iterator) {
+        if (Date.now() - start >= 50) {
+          ref.cancel();
+        } else {
+          i += 1;
+        }
+      }
+    }
+
+    const iterator = task.everyNow('every', 10).promises();
+    await Promise.all([instance(1), instance(2)]);
+    console.log('TODO!');
+  });
 });
