@@ -108,11 +108,13 @@ describe('[defer] | task.defer works as expected', () => {
       complete: true,
       cancelled: true,
       error: false,
+      resolving: false,
     });
     expect(refTwo.status).to.be.deep.equal({
       complete: true,
       cancelled: false,
       error: false,
+      resolving: true,
     });
     expect(executed).to.be.deep.equal({
       one: false,
@@ -153,11 +155,13 @@ describe('[defer] | task.defer works as expected', () => {
       complete: false,
       cancelled: false,
       error: false,
+      resolving: false,
     });
     expect(refTwo.status).to.be.deep.equal({
       complete: false,
       cancelled: false,
       error: false,
+      resolving: false,
     });
 
     refTwo.cancel();
@@ -166,6 +170,7 @@ describe('[defer] | task.defer works as expected', () => {
       complete: true,
       cancelled: true,
       error: false,
+      resolving: false,
     });
 
     await ms(0);
@@ -174,6 +179,7 @@ describe('[defer] | task.defer works as expected', () => {
       complete: true,
       cancelled: false,
       error: false,
+      resolving: true,
     });
   });
 

@@ -97,13 +97,14 @@ function createTaskRef<+ID: any, +A: Array<any>>(
       };
     },
     status: {
+      resolving: false,
       complete: false,
       error: false,
       cancelled: false,
     },
     // $FlowIgnore
     [TASK_CANCELLED](promises) {
-      if (ref.status.complete) {
+      if (ref.status.complete || ref.status.resolving) {
         return;
       }
       ref.status.complete = true;
@@ -149,15 +150,17 @@ function createTaskRef<+ID: any, +A: Array<any>>(
     type,
     task: handler,
     resolve(result) {
+      ref.status.resolving = true;
       // $FlowIgnore
       return ref[EXECUTE_RESULT](undefined, result);
     },
     reject(err) {
+      ref.status.resolving = true;
       // $FlowIgnore
       return ref[EXECUTE_RESULT](err);
     },
     cancel() {
-      if (!ref.status.complete) {
+      if (!ref.status.complete && !ref.status.resolving) {
         if (ref.status.error === false) {
           lastResult = TASK_CANCELLED;
           ref.status.cancelled = true;
@@ -193,15 +196,26 @@ export default function createTaskHandler(): Task$Handler {
     return queue;
   }
 
+  function clearRef(id, withRef) {
+    const descriptor = refs.get(id);
+    if (!descriptor) {
+      return;
+    }
+    const [ref, canceller] = descriptor;
+    if (!withRef || withRef === ref) {
+      canceller();
+      refs.delete(id);
+    }
+    return ref;
+  }
+
   function cancelID(id: any, promises: Array<any>): void {
     // Required for Flow to resolve
-    const descriptor = refs.get(id);
-    if (!descriptor) return;
-    const [ref, canceller] = descriptor;
-    canceller();
-    refs.delete(id);
-    // $FlowIgnore
-    ref[TASK_CANCELLED](promises);
+    const ref = clearRef(id);
+    if (ref) {
+      // $FlowIgnore
+      ref[TASK_CANCELLED](promises);
+    }
   }
 
   function execute<R: Task$Ref, +A: Array<any>, +F:(...args: A) => any>(
@@ -209,6 +223,11 @@ export default function createTaskHandler(): Task$Handler {
     fn: void | F,
     args: A) {
     try {
+      if (ref.type !== 'every') {
+        ref.status.resolving = true;
+        clearRef(ref.id, ref);
+      }
+
       const result = typeof fn === 'function' ? fn.apply(ref, args) : undefined;
       // $FlowIgnore
       ref[EXECUTE_RESULT](undefined, result);

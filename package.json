@@ -1,14 +1,11 @@
 {
   "name": "task-handler",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Handle Javascript Timers in a manageable way",
   "main": "dist/index.js",
   "author": "Braden R. Napier",
   "license": "MIT",
   "reveal": true,
-  "files": [
-    "lib"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Dash-OS/task-handler/"

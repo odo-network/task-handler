@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import createTaskHandler from '../../src';
 import { EXECUTE_RESULT } from '../../src/constants';
 
-// const ms = delay => new Promise(resolve => setTimeout(resolve, delay));
+const ms = delay => new Promise(resolve => setTimeout(resolve, delay));
 
 describe('[misc] | various functions & utilities work', () => {
   it('task.size gives current # of scheduled tasks', () => {
@@ -40,6 +40,20 @@ describe('[misc] | various functions & utilities work', () => {
     expect(shouldntHave).to.be.equal(false);
 
     task.clear();
+  });
+
+  it('removes refs from memory once executed if not an interval type', async () => {
+    const task = createTaskHandler();
+
+    task.after('after', 0, () => {
+      hasID = task.has('after');
+    });
+
+    let hasID = task.has('after');
+
+    expect(hasID).to.be.equal(true);
+    await ms(1);
+    expect(hasID).to.be.equal(false);
   });
 
   it('doesnt cancel a ref with same id that was already cancelled', async () => {

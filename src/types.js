@@ -53,6 +53,7 @@ export type Task$Ref = {|
   get promise(): () => Task$Promise$Regular,
   get promises(): () => Task$Promise$Every,
   +status: {
+    resolving: boolean,
     complete: boolean,
     cancelled: boolean,
     error: boolean,
