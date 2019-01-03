@@ -19,7 +19,10 @@
     "timer",
     "future",
     "cron",
-    "schedule"
+    "schedule",
+    "promise",
+    "sequential",
+    "events"
   ],
   "scripts": {
     "build": "cross-env NODE_ENV=production rimraf dist && npm-run-all -p build:**",
