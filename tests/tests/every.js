@@ -186,31 +186,39 @@ describe('[everySequential] | task.everySequential works as expected', () => {
     expect(i).to.be.equal(2);
     task.clear();
   });
+});
 
-  // it('allows cancellation of every tasks by ID', async () => {
-  //   const task = createTaskHandler();
-  //   let i = 0;
-  //   task.every('every', 10, () => {
-  //     i += 1;
-  //   });
-  //   expect(i).to.be.equal(0);
-  //   task.cancel('every');
-  //   await ms(100);
-  //   expect(i).to.be.equal(0);
-  // });
+describe('[everyNowSequential] | task.everyNowSequential works as expected', () => {
+  it('executes at given interval', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+    task.everyNowSequential('every', 100, () => {
+      i += 1;
+    });
+    await ms(250);
+    // every starts AFTER first tick unless everyNow is used
+    // so 4 is expected.
+    expect(i).to.be.equal(3);
+    task.clear();
+  });
 
-  // it('allows using async iteration resolution', async () => {
-  //   const task = createTaskHandler();
-  //   let i = 0;
-  //   const start = Date.now();
-  //   for await (const ref of task.every('every', 10).promises()) {
-  //     if (Date.now() - start > 50) {
-  //       ref.cancel();
-  //     } else {
-  //       i += 1;
-  //     }
-  //   }
-  //   expect(i).to.be.equal(4);
-  //   task.clear();
-  // });
+  it('executes sequentially at interval', async () => {
+    const task = createTaskHandler();
+    let i = 0;
+    task.everyNowSequential('every', 10, async () => {
+      i += 1;
+      await new Promise(resolve => setTimeout(resolve, 30));
+    });
+    await ms(70);
+    /*
+      As we need to account for loop delays from node / computer:
+
+      Runs Immediately - sets to 1 - 0 (to 10 ms)
+      Waits 30 ms for fn to resolve (30 ms)
+      Waits 30 ms to execute - sets to 2 - (60 ms)
+      Expects 2
+    */
+    expect(i).to.be.equal(2);
+    task.clear();
+  });
 });

@@ -21,8 +21,12 @@ import createDeferQueue from './defer';
  * then the second is awaited until one of the calls returns
  * 'CANCEL'
  */
-async function sequentialLoop(ref, next, execute): Promise<void> {
+async function sequentialLoop(ref, next, execute, deferPromise): Promise<void> {
   // eslint-disable-next-line no-constant-condition
+  if (deferPromise) {
+    await deferPromise;
+    await execute();
+  }
   while (!ref.status.complete) {
     await next();
     if (ref.status.complete) return;
@@ -324,6 +328,45 @@ export default function createTaskHandler(): Task$Handler {
           cancelDefer();
         },
       ]);
+      return ref;
+    },
+    everyNowSequential<+ID: any, +A: Array<any>, +F: (...args: A) => any>(
+      id: ID,
+      interval: number,
+      fn?: F,
+      ...args: A
+    ): Task$Ref {
+      let timerID;
+      let resolveNext;
+      const ref = createTaskRef('every', id, handler);
+
+      const deferPromise = new Promise(resolve => {
+        resolveNext = resolve;
+      });
+
+      const cancelDefer = getQueue().add(id, () => {
+        console.log('Defer');
+        resolveNext();
+      });
+
+      refs.set(id, [
+        ref,
+        () => {
+          cancelDefer();
+          clearTimeout(timerID);
+          resolveNext();
+        },
+      ]);
+
+      const next = () => new Promise(resolve => {
+        resolveNext = resolve;
+        timerID = setTimeout(resolve, interval);
+      });
+
+      const executeNext = () => asyncExecute(ref, fn, args);
+
+      sequentialLoop(ref, next, executeNext, deferPromise);
+
       return ref;
     },
     everySequential<+ID: any, +A: Array<any>, +F: (...args: A) => any>(

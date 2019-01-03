@@ -8,7 +8,7 @@ async function test() {
   let i = 0;
   const start = Date.now();
   let last = start;
-  const refOne = task.everySequential('every', 100, async () => {
+  const refOne = task.everyNowSequential('every', 1000, async () => {
     i += 1;
     let now = Date.now();
     console.log(now - start, now - last);

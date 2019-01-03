@@ -38,6 +38,12 @@ export type Task$Handler = {|
     fn?: F,
     ...args: A
   ): Task$Ref,
+  everyNowSequential<ID: any, A: Array<any>, F: (...args: A) => any>(
+    id: ID,
+    interval: number,
+    fn?: F,
+    ...args: A
+  ): Task$Ref,
   job<ID: any, A: Array<any>, F: (...args: A) => Task$Job>(
     id: ID,
     getJob: F,
