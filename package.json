@@ -1,6 +1,6 @@
 {
   "name": "task-handler",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "Handle Javascript Timers in a manageable way",
   "main": "dist/index.js",
   "author": "Braden R. Napier",
