@@ -164,7 +164,11 @@ function createTaskRef<+ID: any, +A: Array<any>>(
         }
         if (err && !promiseActions) {
           console.error(
-            "[ERROR] | task-handler | An unhandled error occurred while running a task.  This can be handled by calling 'ref.promise().catch()' or through async iteration handling if the task is using intervals.\n",
+            `[ERROR] | task-handler | An unhandled error occurred while running a task with id "${
+              ref.id
+            }" with type "${
+              ref.type
+            }".  This can be handled by calling 'ref.promise().catch()' or through async iteration handling if the task is using intervals.\n`,
             err,
           );
           return;

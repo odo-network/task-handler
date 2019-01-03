@@ -37,16 +37,18 @@ import createTaskHandler from "task-handler";
 const task = createTaskHandler("simple");
 
 // after timeout
-task.after("task:one", 3000, () => log("task:one execute"));
+const refOne = task.after("task:one", 3000, () => log("task:one execute"));
 
 // every interval, execute
-task.every("task:two", 3000, () => log("task:two execute"));
+const refTwo = task.every("task:two", 3000, () => log("task:two execute"));
 
 // immediately execute on next tick (nextTick, immediate, timeout priority - first found)
-task.defer("task:three", () => log("task:three execute"));
+const refThree = task.defer("task:three", () => log("task:three execute"));
 
 // every interval and immediately (defer), execute
-task.everyNow("task:four", 3000, () => log("task:four execute"));
+const refFour = task.everyNow("task:four", 3000, () =>
+  log("task:four execute")
+);
 
 // sequentially execute at an interval -
 // waits until the function requested to
@@ -55,7 +57,7 @@ task.everyNow("task:four", 3000, () => log("task:four execute"));
 // - NOTE: Awaits promises if returned
 //         by the function. Which is not
 //         the standard behavior.
-task.everySequential("task:five", 100, async () => {
+const refFive = task.everySequential("task:five", 100, async () => {
   log("task:five execute");
   await new Promise(resolve => setTimeout(resolve, 3000));
   log("task:five completes");
@@ -63,14 +65,14 @@ task.everySequential("task:five", 100, async () => {
 
 // same as above but adds a deferred execution first
 // which occurs on the next tick.
-task.everyNowSequential("task:six", 100, async () => {
+const refSix = task.everyNowSequential("task:six", 100, async () => {
   log("task:six execute");
   await new Promise(resolve => setTimeout(resolve, 3000));
   log("task:six completes");
 });
 
 // schedule an advanced async job with cancellation
-task.job(
+const refSeven = task.job(
   "task:seven",
   function TaskFiveHandler(...args) {
     // args resolves to [1, 2, 3]
@@ -110,6 +112,58 @@ task.after("complete", 10000, () => {
   task.clear();
 });
 ```
+
+### Refs
+
+`task-handler` implements a concept of `task refs` so that we can provide a unified API across all of the event types.
+
+When using `promises`, the promise will be resolved with the `ref` for the task which allows capturing the result via `ref.result`.
+
+> If an error is caught, the error object will include the ref as a property.
+
+```javascript
+export type Task$Types = "after" | "every" | "defer" | "job";
+
+export type Task$Ref = {|
+  /* Task ID */
+  +id: any,
+  /* indicates the general type of the task */
+  +type: Task$Types,
+  /* the result of executing the tasks handler */
+  get result(): any,
+  /* returns a promise that resolves to the next result.
+     if the task is an 'every' type, it must be called 
+     after every execution to continually get the next 
+     promise (or use ref.promises() instead). */
+  get promise(): () => Task$Promise$Regular,
+  /* async iterator that provides results for each iteration.  May only be called on 'every' type tasks. */
+  get promises(): () => Task$Promise$Every,
+  /* Status about the task */
+  +status: {
+    /* Task is resolving by calling its execute handler */
+    resolving: boolean,
+    /* Task has resolved and has completed execution */
+    complete: boolean,
+    /* Task was cancelled */
+    cancelled: boolean,
+    /* Task encountered an error */
+    error: boolean
+  },
+  /* Cancels the task, an alias for `task.cancel(ref.id)` */
+  cancel(): void,
+  /* Resolves the task with the value provided. */
+  resolve(value: any): void,
+  /* Rejects the event and calls the error handling 
+     that is present on the task (if any).  Generally 
+     used for `task.job` but works with any active 
+     task. */
+  reject(reason: any): void,
+  /* top-level task handler the ref belongs to */
+  task: Task$Handler
+|};
+```
+
+> For the complete types, view [types.js](./src/types.js).
 
 ### Promises
 
