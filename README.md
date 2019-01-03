@@ -23,7 +23,7 @@ npm install --save task-handler
 
 ## Coverage
 
-This project provides `.flow.js` files for `Flow` to utilize. It also attempts to provide 100% test coverage.
+This project provides `.flow.js` files for `Flow` to utilize. It also attempts to provide near-100% test coverage.
 
 ## Example
 
