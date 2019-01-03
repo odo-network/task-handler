@@ -113,7 +113,13 @@ task.after("complete", 10000, () => {
 });
 ```
 
-### Refs
+### Features / Summaries
+
+#### Auto Cancellation
+
+Creating a task with the same `id` as another task will cancel the previous task and schedule the next automatically.
+
+#### Refs
 
 `task-handler` implements a concept of `task refs` so that we can provide a unified API across all of the event types.
 
@@ -165,7 +171,7 @@ export type Task$Ref = {|
 
 > For the complete types, view [types.js](./src/types.js).
 
-### Promises
+#### Promises
 
 When calling `.promise()` on the task ref, `after` and `defer` return regular promises that resolve to the task ref with a result of the function passed. If no function is passed then the `ref.result` will be undefined.
 
