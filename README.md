@@ -99,7 +99,7 @@ task.job(
 );
 
 // get the total # of tasks scheduled
-task.size; // 6
+task.size; // 7
 
 // cancels each of the given ID's, if they exist
 task.cancel("task:one", "task:two");
