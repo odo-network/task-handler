@@ -61,9 +61,17 @@ task.everySequential("task:five", 100, async () => {
   log("task:five completes");
 });
 
+// same as above but adds a deferred execution first
+// which occurs on the next tick.
+task.everyNowSequential("task:six", 100, async () => {
+  log("task:six execute");
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  log("task:six completes");
+});
+
 // schedule an advanced async job with cancellation
 task.job(
-  "task:six",
+  "task:seven",
   function TaskFiveHandler(...args) {
     // args resolves to [1, 2, 3]
     // saved context - `this` resolves to the job `ref`
