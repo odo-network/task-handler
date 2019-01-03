@@ -48,9 +48,22 @@ task.defer("task:three", () => log("task:three execute"));
 // every interval and immediately (defer), execute
 task.everyNow("task:four", 3000, () => log("task:four execute"));
 
+// sequentially execute at an interval -
+// waits until the function requested to
+// finish before scheduling the next
+// timeout.
+// - NOTE: Awaits promises if returned
+//         by the function. Which is not
+//         the standard behavior.
+task.everySequential("task:five", 100, async () => {
+  log("task:five execute");
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  log("task:five completes");
+});
+
 // schedule an advanced async job with cancellation
 task.job(
-  "task:five",
+  "task:six",
   function TaskFiveHandler(...args) {
     // args resolves to [1, 2, 3]
     // saved context - `this` resolves to the job `ref`
@@ -78,7 +91,7 @@ task.job(
 );
 
 // get the total # of tasks scheduled
-task.size; // 5
+task.size; // 6
 
 // cancels each of the given ID's, if they exist
 task.cancel("task:one", "task:two");

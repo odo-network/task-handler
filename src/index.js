@@ -16,6 +16,20 @@ import {
 
 import createDeferQueue from './defer';
 
+/**
+ * Runs a sequential loop where the first fn is awaited
+ * then the second is awaited until one of the calls returns
+ * 'CANCEL'
+ */
+async function sequentialLoop(ref, next, execute): Promise<void> {
+  // eslint-disable-next-line no-constant-condition
+  while (!ref.status.complete) {
+    await next();
+    if (ref.status.complete) return;
+    await execute();
+  }
+}
+
 function createTaskRef<+ID: any, +A: Array<any>>(
   type: Task$Types,
   id: ID,
@@ -227,13 +241,31 @@ export default function createTaskHandler(): Task$Handler {
         ref.status.resolving = true;
         clearRef(ref.id, ref);
       }
-
       const result = typeof fn === 'function' ? fn.apply(ref, args) : undefined;
       // $FlowIgnore
       ref[EXECUTE_RESULT](undefined, result);
     } catch (e) {
       // $FlowIgnore
       ref[EXECUTE_RESULT](e);
+    }
+  }
+
+  async function asyncExecute<
+    R: Task$Ref,
+    +A: Array<any>,
+    +F:(...args: A) => any,
+  >(ref: R, fn: void | F, args: A) {
+    try {
+      if (ref.type !== 'every') {
+        ref.status.resolving = true;
+        clearRef(ref.id, ref);
+      }
+      const result = typeof fn === 'function' ? await fn.apply(ref, args) : undefined;
+      // $FlowIgnore
+      await ref[EXECUTE_RESULT](undefined, result);
+    } catch (e) {
+      // $FlowIgnore
+      await ref[EXECUTE_RESULT](e);
     }
   }
 
@@ -292,6 +324,35 @@ export default function createTaskHandler(): Task$Handler {
           cancelDefer();
         },
       ]);
+      return ref;
+    },
+    everySequential<+ID: any, +A: Array<any>, +F: (...args: A) => any>(
+      id: ID,
+      interval: number,
+      fn?: F,
+      ...args: A
+    ): Task$Ref {
+      let timerID;
+      let resolveNext;
+      const ref = createTaskRef('every', id, handler);
+
+      refs.set(id, [
+        ref,
+        () => {
+          clearTimeout(timerID);
+          resolveNext();
+        },
+      ]);
+
+      const next = () => new Promise(resolve => {
+        resolveNext = resolve;
+        timerID = setTimeout(resolve, interval);
+      });
+
+      const executeNext = () => asyncExecute(ref, fn, args);
+
+      sequentialLoop(ref, next, executeNext);
+
       return ref;
     },
     job<+ID: any, +A: Array<any>, F: (...args: A) => Task$Job>(

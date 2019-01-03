@@ -1,22 +1,31 @@
 // /* @flow */
 
-// import createTask from '../src';
+import createTask from '../src';
 
-// const task = createTask();
+const task = createTask();
 
-// async function test() {
-//   let refTwo;
-//   const refOne = task.after('after', 10, () => {
-//     console.log('Ref One After');
-//     refTwo = task.after('after', 10, () => {
-//       console.log('Executed RefTwo');
-//       executed = true;
-//     });
-//     refOne.cancel();
-//   });
+async function test() {
+  let i = 0;
+  const start = Date.now();
+  let last = start;
+  const refOne = task.everySequential('every', 100, async () => {
+    i += 1;
+    let now = Date.now();
+    console.log(now - start, now - last);
+    last = now;
+    const id = i;
+    console.log('EVERY EXECUTES! ', id);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    now = Date.now();
+    console.log(now - start, now - last);
+    last = now;
+    console.log('EVERY COMPLETES ', id);
 
-//   await refOne.promise();
-//   await refTwo.promise();
-// }
+    if (i >= 2) {
+      console.log('Cancelling!');
+      refOne.cancel();
+    }
+  });
+}
 
-// test();
+test();
