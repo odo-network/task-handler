@@ -54,6 +54,17 @@ function createTaskRef<+ID: any, +A: Array<any>>(
     return promise;
   };
 
+  const getTaskError = err => {
+    ref.status.error = true;
+    const error: { taskRef?: Task$Ref } & Error = typeof err === 'object' ? err : new Error(err);
+    error.taskRef = ref;
+    lastResult = error;
+    if (ref.type !== 'every') {
+      ref.cancel();
+    }
+    return error;
+  };
+
   const ref: Task$Ref = {
     get result() {
       if (ref.status.complete) {
@@ -151,15 +162,16 @@ function createTaskRef<+ID: any, +A: Array<any>>(
         if (ref.type !== 'every') {
           ref.status.complete = true;
         }
+        if (err && !promiseActions) {
+          console.error(
+            "[ERROR] | task-handler | An unhandled error occurred while running a task.  This can be handled by calling 'ref.promise().catch()' or through async iteration handling if the task is using intervals.\n",
+            err,
+          );
+          return;
+        }
+        const error = err ? getTaskError(err) : undefined;
         if (promiseActions) {
-          if (err) {
-            ref.status.error = true;
-            const error: { taskRef?: Task$Ref } & Error = typeof err === 'object' ? err : new Error(err);
-            error.taskRef = ref;
-            lastResult = error;
-            ref.cancel();
-            return promiseActions[1](error);
-          }
+          if (error) return promiseActions[1](error);
           return promiseActions[0](ref);
         }
       }
@@ -345,7 +357,6 @@ export default function createTaskHandler(): Task$Handler {
       });
 
       const cancelDefer = getQueue().add(id, () => {
-        console.log('Defer');
         resolveNext();
       });
 

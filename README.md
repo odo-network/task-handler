@@ -126,11 +126,12 @@ task
 
 Interval tasks such as `every` and `everyNow` return `async iterators` when their `.promises()` function is called. This allows us to utilize the handy `for await... of` feature of JS.
 
-> **IMPORTANT:** Notice that `every` and `everyNow` use `.promises()` and now `.promise()`. This is to allow for type safety. These tasks will error if `.promise()` is called on them.
+> **IMPORTANT:** Notice that `every`, `everySequential`, and their related siblings use `.promises()` and `.promise()`. If other functions call `.promises()` which are not interval types they will throw an error.
 
 ```js
 async function intervalForAwait() {
-  for await (const ref of task.every("everyID", 1000).promises()) {
+  const ref = task.every("everyID", 1000);
+  for await (const ref of ref.promises()) {
     console.log("Next Tick");
     // based on some logic...
     ref.cancel();
@@ -151,5 +152,25 @@ async function intervalAwait() {
     ref.cancel();
   }
   console.log("After Cancel everyID");
+}
+
+// if we want to handle errors that are not caught
+// in the task runner we can utilize a while loop:
+async function awaitResults(ref) {
+  const ref = task.every(
+    "everyID",
+    1000,
+    () => throw new Error("Error Message")
+  );
+  while (true) {
+    try {
+      for await (const result of ref.promises()) {
+        console.log("Tick!");
+      }
+      return;
+    } catch (e) {
+      console.log("Error!", e);
+    }
+  }
 }
 ```

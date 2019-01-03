@@ -4,11 +4,24 @@ import createTask from '../src';
 
 const task = createTask();
 
+async function awaitResults(ref) {
+  while (true) {
+    try {
+      for await (const result of ref.promises()) {
+        console.log('Result! ', result);
+      }
+      return;
+    } catch (e) {
+      console.log('ERROR!', e);
+    }
+  }
+}
+
 async function test() {
   let i = 0;
   const start = Date.now();
   let last = start;
-  const refOne = task.everyNowSequential('every', 1000, async () => {
+  const refOne = task.everySequential('every', 1000, async () => {
     i += 1;
     let now = Date.now();
     console.log(now - start, now - last);
@@ -21,11 +34,10 @@ async function test() {
     last = now;
     console.log('EVERY COMPLETES ', id);
 
-    if (i >= 2) {
-      console.log('Cancelling!');
-      refOne.cancel();
-    }
+    throw new Error('ERROR!!!');
   });
+
+  awaitResults(refOne);
 }
 
 test();
