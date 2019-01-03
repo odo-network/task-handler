@@ -12,7 +12,7 @@ async function awaitResults(ref) {
       }
       return;
     } catch (e) {
-      console.log('ERROR!', e);
+      task.clear();
     }
   }
 }
