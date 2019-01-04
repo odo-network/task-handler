@@ -168,7 +168,7 @@ function createTaskRef<+ID: any, +A: Array<any>>(
               ref.id
             }" with type "${
               ref.type
-            }".  This can be handled by calling 'ref.promise().catch()' or through async iteration handling if the task is using intervals.\n`,
+            }".  If the errors can not be caught in the handler function that is called, these errors can be handled by calling 'ref.promise().catch()' or through async iteration handling if the task is using intervals.\n`,
             err,
           );
           return;
