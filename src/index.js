@@ -16,6 +16,8 @@ import {
 
 import createDeferQueue from './defer';
 
+export { TASK_CANCELLED } from './constants';
+
 /**
  * Runs a sequential loop where the first fn is awaited
  * then the second is awaited until one of the calls returns
