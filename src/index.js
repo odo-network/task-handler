@@ -149,10 +149,17 @@ function createTaskRef<+ID: any, +A: Array<any>>(
           /* istanbul ignore else */
           if (typeof job.cancelled === 'function') {
             promises.push(job.cancelled.call(ref, ref));
-          } else if (process.env.NODE_ENV !== 'production') {
+          } else if (
+            !job.complete
+            && typeof process === 'object'
+            && process.env.NODE_ENV !== 'production'
+          ) {
             console.warn(
-              `[WARN] | task-handler | Async Job "${id}" was cancelled but provided no "cancelled" handler.`,
+              `[WARN] | task-handler | Async Job "${id}" was cancelled but provided no "cancelled" or "complete" handler.`,
             );
+          }
+          if (job.complete) {
+            promises.push(job.complete.call(ref, ref));
           }
         }
       }
@@ -176,6 +183,14 @@ function createTaskRef<+ID: any, +A: Array<any>>(
           return;
         }
         const error = err ? getTaskError(err) : undefined;
+        if (job) {
+          if (error && job.error) {
+            job.error.call(ref, error);
+          }
+          if (job.complete) {
+            job.complete.call(ref, ref);
+          }
+        }
         if (promiseActions) {
           if (error) return promiseActions[1](error);
           return promiseActions[0](ref);

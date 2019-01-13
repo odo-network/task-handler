@@ -36,6 +36,71 @@ describe('[job] | task.job works as expected', () => {
     task.clear();
   });
 
+  it('calls the complete() callback when resolved', async () => {
+    const task = createTaskHandler();
+    let success = false;
+    await task
+      .job('job', () => ({
+        start(ref) {
+          ref.resolve('complete');
+        },
+        complete(ref) {
+          if (ref.result === 'complete') {
+            success = true;
+          }
+        },
+      }))
+      .promise();
+
+    expect(success).to.be.equal(true);
+    task.clear();
+  });
+
+  it('calls the complete() callback when errored', async () => {
+    const task = createTaskHandler();
+    let success = false;
+    let caught = false;
+    await task
+      .job('job', () => ({
+        start(ref) {
+          ref.reject('complete');
+        },
+        complete(ref) {
+          if (ref.result.message === 'complete') {
+            success = true;
+          }
+        },
+      }))
+      .promise()
+      .catch(() => {
+        caught = true;
+      });
+
+    expect(success).to.be.equal(true);
+    expect(caught).to.be.equal(true);
+    task.clear();
+  });
+
+  it('calls the complete() callback when cancelled', async () => {
+    const task = createTaskHandler();
+    let success = false;
+    await task
+      .job('job', () => ({
+        start(ref) {
+          ref.cancel();
+        },
+        complete(ref) {
+          if (ref.status.cancelled === true) {
+            success = true;
+          }
+        },
+      }))
+      .promise();
+
+    expect(success).to.be.equal(true);
+    task.clear();
+  });
+
   it('executes task.job().cancelled synchronously', async () => {
     const task = createTaskHandler();
     let executed = false;
@@ -83,7 +148,7 @@ describe('[job] | task.job works as expected', () => {
     const task = createTaskHandler();
     let msg;
     try {
-      const ref2 = await task
+      await task
         .job('job', () => ({
           start(ref) {
             ref.reject('error');

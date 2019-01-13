@@ -76,12 +76,9 @@ export type Task$Ref = {|
   task: Task$Handler,
 |};
 
-export type Task$Job =
-  | {|
-      start(ref: Task$Ref): any,
-      cancelled?: void,
-    |}
-  | {|
-      start(ref: Task$Ref): any,
-      cancelled(ref: Task$Ref): any,
-    |};
+export type Task$Job = {|
+  start: (ref: Task$Ref) => any,
+  error?: (error: Error) => any,
+  cancelled?: (ref: Task$Ref) => any,
+  complete?: (ref: Task$Ref) => any,
+|};
