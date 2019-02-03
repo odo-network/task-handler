@@ -23,7 +23,13 @@ npm install --save task-handler
 
 ## Coverage
 
+### Flow
+
 This project provides `.flow.js` files for `Flow` to utilize. It also attempts to provide near-100% test coverage.
+
+### Typescript
+
+This project provides the appropriate `index.d.ts` file for TypeScript users.
 
 ## Example
 
