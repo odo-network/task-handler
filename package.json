@@ -1,6 +1,6 @@
 {
   "name": "task-handler",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "Handle Javascript Timers like a boss! https://odo-network.github.io/task-handler/",
   "main": "dist/index.js",
   "author": "Braden R. Napier",
