@@ -75,7 +75,7 @@ const refSix = task.everyNowSequential("task:six", 100, async () => {
 const refSeven = task.job(
   "task:seven",
   function TaskFiveHandler(...args) {
-    // args resolves to [1, 2, 3]
+    // args resolves to [ref, 1, 2, 3]
     // saved context - `this` resolves to the job `ref`
     const ref = this;
     return {

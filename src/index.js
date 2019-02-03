@@ -223,7 +223,7 @@ function createTaskRef<+ID: any, +A: Array<any>>(
 
   if (jobDescriptor) {
     const [getJob, args, refs] = jobDescriptor;
-    job = getJob.apply(ref, args);
+    job = getJob.call(ref, ref, ...args);
     ref.promise().catch(NOOP);
     // in the case of async jobs we need to set the refs
     // before we run the start call synchronously so that
