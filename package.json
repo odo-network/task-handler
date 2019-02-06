@@ -1,6 +1,6 @@
 {
   "name": "task-handler",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "Handle Javascript Timers like a boss! https://odo-network.github.io/task-handler/",
   "main": "dist/index.js",
   "author": "Braden R. Napier",
@@ -25,7 +25,7 @@
     "events"
   ],
   "scripts": {
-    "build": "cross-env NODE_ENV=production rimraf dist && npm-run-all -p build:**",
+    "build": "rimraf dist && mkdir dist && npm-run-all -p build:**",
     "build:handler:babel": "cross-env NODE_ENV=production babel src --out-dir dist",
     "build:handler:flow": "flow-copy-source src dist",
     "build:handler:tsc": "cp src/index.d.ts dist/index.d.ts",

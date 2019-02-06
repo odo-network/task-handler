@@ -19,8 +19,10 @@ declare module 'task-handler' {
     type: T;
     task: H;
 
-    readonly promise: Task$Promise$Regular<Task$Ref$Complete<T, ID, R, H>>;
-    readonly promises: Task$Promise$Every<Task$Ref$Complete<T, ID, R, H>>;
+    readonly promise: () => Task$Promise$Regular<
+      Task$Ref$Complete<T, ID, R, H>
+    >;
+    readonly promises: () => Task$Promise$Every<Task$Ref$Complete<T, ID, R, H>>;
 
     cancel(): undefined;
     resolve(value: any): R;

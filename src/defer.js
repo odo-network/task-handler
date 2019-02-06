@@ -40,18 +40,26 @@ export default function createDeferQueue(refs: Task$RefMap) {
   };
 
   function flush() {
-    queue.forEach(([ref, cb]) => {
+    const flushQueue = new Map(queue);
+    queue.clear();
+    flushQueue.forEach(([ref, cb]) => {
       // we have to delete each as we execute so that if the
       // callback schedules another execution we don't remove
       // them.
       refs.delete(ref.id);
-      cb();
+      try {
+        cb();
+      } catch (err) {
+        console.error(
+          '[task-handler] | ERROR | uncaughtError occurred in a defer flush callback',
+          ref.id,
+        );
+      }
     });
-    queue.clear();
     return handler;
   }
 
-  const handler = Object.freeze({
+  const handler = {
     clear() {
       /* istanbul ignore else */
       if (timeout.cancel) {
@@ -85,7 +93,7 @@ export default function createDeferQueue(refs: Task$RefMap) {
       queue.set(deferID, [ref, cb]);
       return () => handler.cancel(deferID);
     },
-  });
+  };
 
   return handler;
 }

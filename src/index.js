@@ -40,6 +40,7 @@ function createTaskRef<+ID: any, +A: Array<any>>(
   type: Task$Types,
   id: ID,
   handler: Task$Handler,
+  clearRef,
   jobDescriptor?: [(...args: A) => Task$Job, A, Task$RefMap],
 ): Task$Ref {
   handler.cancel(id);
@@ -169,6 +170,7 @@ function createTaskRef<+ID: any, +A: Array<any>>(
       if (!ref.status.complete) {
         lastResult = result;
         if (ref.type !== 'every') {
+          clearRef(id);
           ref.status.complete = true;
         }
         if (err && !promiseActions) {
@@ -249,15 +251,23 @@ export default function createTaskHandler(): Task$Handler {
 
   function clearRef(id, withRef) {
     const descriptor = refs.get(id);
-    if (!descriptor) {
-      return;
-    }
-    const [ref, canceller] = descriptor;
-    if (!withRef || withRef === ref) {
-      canceller();
+    if (!descriptor) return;
+    try {
+      const [ref, canceller] = descriptor;
+      if (!withRef || withRef === ref) {
+        try {
+          canceller();
+        } catch (err) {
+          console.error(
+            '[task-handler] | ERROR | Failed to call canceller for ref with id: ',
+            id,
+          );
+        }
+      }
+      return ref;
+    } finally {
       refs.delete(id);
     }
-    return ref;
   }
 
   function cancelID(id: any, promises: Array<any>): void {
@@ -276,7 +286,6 @@ export default function createTaskHandler(): Task$Handler {
     try {
       if (ref.type !== 'every') {
         ref.status.resolving = true;
-        clearRef(ref.id, ref);
       }
       const result = typeof fn === 'function' ? fn.apply(ref, args) : undefined;
       // $FlowIgnore
@@ -295,7 +304,6 @@ export default function createTaskHandler(): Task$Handler {
     try {
       if (ref.type !== 'every') {
         ref.status.resolving = true;
-        clearRef(ref.id, ref);
       }
       const result = typeof fn === 'function' ? await fn.apply(ref, args) : undefined;
       // $FlowIgnore
