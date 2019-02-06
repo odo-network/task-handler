@@ -56,6 +56,23 @@ describe('[misc] | various functions & utilities work', () => {
     expect(hasID).to.be.equal(false);
   });
 
+  it('removes refs from memory for async jobs', async () => {
+    const task = createTaskHandler();
+
+    const jobref = task.job('job', ref => ({
+      start() {
+        task.after('after', 1, ref.resolve);
+      },
+    }));
+
+    expect(task.has('job')).to.be.equal(true);
+    expect(task.has('after')).to.be.equal(true);
+
+    await jobref.promise();
+    expect(task.has('job')).to.be.equal(false);
+    expect(task.has('after')).to.be.equal(false);
+  });
+
   it('doesnt cancel a ref with same id that was already cancelled', async () => {
     const task = createTaskHandler();
 

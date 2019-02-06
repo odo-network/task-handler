@@ -170,7 +170,6 @@ function createTaskRef<+ID: any, +A: Array<any>>(
       if (!ref.status.complete) {
         lastResult = result;
         if (ref.type !== 'every') {
-          clearRef(id);
           ref.status.complete = true;
         }
         if (err && !promiseActions) {
@@ -204,11 +203,13 @@ function createTaskRef<+ID: any, +A: Array<any>>(
     task: handler,
     resolve(result) {
       ref.status.resolving = true;
+      clearRef(id);
       // $FlowIgnore
       return ref[EXECUTE_RESULT](undefined, result);
     },
     reject(err) {
       ref.status.resolving = true;
+      clearRef(id);
       // $FlowIgnore
       return ref[EXECUTE_RESULT](err);
     },
@@ -286,6 +287,7 @@ export default function createTaskHandler(): Task$Handler {
     try {
       if (ref.type !== 'every') {
         ref.status.resolving = true;
+        clearRef(ref.id);
       }
       const result = typeof fn === 'function' ? fn.apply(ref, args) : undefined;
       // $FlowIgnore
@@ -304,6 +306,7 @@ export default function createTaskHandler(): Task$Handler {
     try {
       if (ref.type !== 'every') {
         ref.status.resolving = true;
+        clearRef(ref.id);
       }
       const result = typeof fn === 'function' ? await fn.apply(ref, args) : undefined;
       // $FlowIgnore
@@ -327,7 +330,7 @@ export default function createTaskHandler(): Task$Handler {
       fn?: F,
       ...args: A
     ): Task$Ref {
-      const ref = createTaskRef('after', id, handler);
+      const ref = createTaskRef('after', id, handler, clearRef);
       const timeoutID = setTimeout(execute, delay, ref, fn, args);
       refs.set(id, [ref, () => clearTimeout(timeoutID)]);
       return ref;
@@ -337,7 +340,7 @@ export default function createTaskHandler(): Task$Handler {
       fn?: F,
       ...args: A
     ): Task$Ref {
-      const ref = createTaskRef('defer', id, handler);
+      const ref = createTaskRef('defer', id, handler, clearRef);
       const cancelDefer = getQueue().add(ref, () => execute(ref, fn, args));
       refs.set(id, [ref, () => cancelDefer()]);
       return ref;
@@ -348,7 +351,7 @@ export default function createTaskHandler(): Task$Handler {
       fn?: F,
       ...args: A
     ): Task$Ref {
-      const ref = createTaskRef('every', id, handler);
+      const ref = createTaskRef('every', id, handler, clearRef);
       const timerID = setInterval(execute, interval, ref, fn, args);
       refs.set(id, [ref, () => clearInterval(timerID)]);
       return ref;
@@ -359,7 +362,7 @@ export default function createTaskHandler(): Task$Handler {
       fn?: F,
       ...args: A
     ): Task$Ref {
-      const ref = createTaskRef('every', id, handler);
+      const ref = createTaskRef('every', id, handler, clearRef);
       const timerID = setInterval(execute, interval, ref, fn, args);
       const cancelDefer = getQueue().add(id, () => execute(ref, fn, args));
       refs.set(id, [
@@ -379,7 +382,7 @@ export default function createTaskHandler(): Task$Handler {
     ): Task$Ref {
       let timerID;
       let resolveNext;
-      const ref = createTaskRef('every', id, handler);
+      const ref = createTaskRef('every', id, handler, clearRef);
 
       const deferPromise = new Promise(resolve => {
         resolveNext = resolve;
@@ -417,7 +420,7 @@ export default function createTaskHandler(): Task$Handler {
     ): Task$Ref {
       let timerID;
       let resolveNext;
-      const ref = createTaskRef('every', id, handler);
+      const ref = createTaskRef('every', id, handler, clearRef);
 
       refs.set(id, [
         ref,
@@ -443,7 +446,7 @@ export default function createTaskHandler(): Task$Handler {
       getJob: F,
       ...args: A
     ): Task$Ref {
-      const ref = createTaskRef('job', id, handler, [
+      const ref = createTaskRef('job', id, handler, clearRef, [
         getJob,
         args || STATIC_EMPTY_ARRAY,
         refs,
