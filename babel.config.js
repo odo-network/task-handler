@@ -18,6 +18,7 @@ module.exports = function getBabelConfiguration(api) {
       ...(process.env.NODE_ENV === 'production' ? ['babel-preset-minify'] : []),
     ].filter(Boolean),
     plugins: [
+      '@babel/plugin-transform-runtime',
       '@babel/plugin-proposal-do-expressions',
       '@babel/plugin-proposal-class-properties',
       ...(process.env.NODE_ENV === 'test' ? ['istanbul'] : []),
