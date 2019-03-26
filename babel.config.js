@@ -9,9 +9,15 @@ module.exports = function getBabelConfiguration(api) {
         {
           shippedProposals: true,
           useBuiltIns: 'usage',
+          corejs: '3.0.0',
           targets: {
             node: '9',
-            browsers: ['last 2 versions'],
+            browsers: [
+              'last 2 Chrome versions',
+              'last 2 Firefox versions',
+              'last 3 Edge versions',
+              'last 1 Safari versions',
+            ],
           },
         },
       ],
