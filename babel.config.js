@@ -1,33 +1,50 @@
 module.exports = function getBabelConfiguration(api) {
   api.cache(true);
+  const plugins = [
+    '@babel/plugin-transform-runtime',
+    '@babel/plugin-proposal-do-expressions',
+    '@babel/plugin-proposal-class-properties'
+  ];
   return {
-    comments: false,
-    presets: [
-      '@babel/preset-flow',
-      [
-        '@babel/preset-env',
-        {
-          shippedProposals: true,
-          useBuiltIns: 'usage',
-          corejs: '3.0.0',
-          targets: {
-            node: '9',
-            browsers: [
-              'last 2 Chrome versions',
-              'last 2 Firefox versions',
-              'last 3 Edge versions',
-              'last 1 Safari versions',
-            ],
-          },
-        },
-      ],
-      ...(process.env.NODE_ENV === 'production' ? ['babel-preset-minify'] : []),
-    ].filter(Boolean),
-    plugins: [
-      '@babel/plugin-transform-runtime',
-      '@babel/plugin-proposal-do-expressions',
-      '@babel/plugin-proposal-class-properties',
-      ...(process.env.NODE_ENV === 'test' ? ['istanbul'] : []),
-    ].filter(Boolean),
+    env: {
+      // jest doesn't take account of BABEL_ENV, you need to set NODE_ENV - https://facebook.github.io/jest/docs/getting-started.html#using-babel
+      commonjs: {
+        presets: [
+          '@babel/preset-flow',
+          [
+            '@babel/preset-env',
+            {
+              useBuiltIns: false,
+            },
+          ],
+        ],
+        plugins,
+      },
+      es: {
+        presets: [
+          '@babel/preset-flow',
+          [
+            '@babel/preset-env',
+            {
+              useBuiltIns: false,
+              modules: false,
+            },
+          ],
+        ],
+        plugins,
+      },
+      test: {
+        presets: [
+          '@babel/preset-flow',
+          [
+            '@babel/preset-env',
+            {
+              useBuiltIns: false,
+            },
+          ],
+        ],
+        plugins: [...plugins, 'istanbul'],
+      },
+    },
   };
 };
