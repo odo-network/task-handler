@@ -2,7 +2,11 @@
   "name": "task-handler",
   "version": "2.11.0",
   "description": "Handle Javascript Timers like a boss! https://odo-network.github.io/task-handler/",
+  
+  "module": "dist-es/index.js",
   "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  
   "author": "Braden R. Napier",
   "license": "MIT",
   "reveal": true,
@@ -25,16 +29,17 @@
     "events"
   ],
   "scripts": {
-    "build": "rimraf dist && mkdir dist && npm-run-all -p build:**",
-    "build:handler:babel": "cross-env NODE_ENV=production babel src --out-dir dist",
-    "build:handler:flow": "flow-copy-source src dist",
-    "build:handler:tsc": "cp src/index.d.ts dist/index.d.ts",
+    "build": "rimraf dist && mkdir dist && rimraf dist-es && mkdir dist-es && npm-run-all -p build:**",
+    "build:handler:babel": "cross-env BABEL_ENV=commonjs NODE_ENV=production babel src --out-dir dist",
+    "build:handler:babel_es": "cross-env BABEL_ENV=es NODE_ENV=production babel src --out-dir dist-es",
+    "build:handler:flow": "flow-copy-source src dist && flow-copy-source src dist-es",
+    "build:handler:tsc": "cp src/index.d.ts dist/index.d.ts && cp src/index.d.ts dist-es/index.d.ts",
     "coverage": "npm-run-all coverage:*",
     "coverage:tests": "cross-env NODE_ENV=test nyc yarn test && nyc report --reporter=html --reporter=text-lcov | coveralls",
     "coverage:flow": "flow-coverage-report",
     "flow": "flow",
     "prepublishOnly": "npm-run-all coverage build",
-    "test": "cross-env NODE_ENV=test nyc mocha --require @babel/register --recursive ./tests/tests/*.js",
+    "test": "cross-env BABEL_ENV=test nyc mocha --require @babel/register --recursive ./tests/tests/*.js",
     "try": "babel-node ./tests/quick-test"
   },
   "nyc": {

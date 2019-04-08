@@ -6,3 +6,4 @@ registry/
 .nyc_output
 /.coveralls.yml
 dist
+dist-es
